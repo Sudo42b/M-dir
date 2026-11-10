@@ -74,7 +74,7 @@ cargo install --path crates/vv    # vv (다른 도구도 같은 방식)
 ### 원본과 다른 점
 
 - 플로피 드라이브가 없으므로 디스크 복사·포맷은 디스크 이미지 파일을 다룹니다.
-- 마우스는 m의 파일 목록·MCD 트리·펑션키 줄·메뉴·대화상자에서 쓸 수 있고, vv·mset 등 다른 도구의 자체 화면은 대화상자와 휠만 됩니다.
+- 마우스는 m(파일 목록·MCD 트리·펑션키 줄·메뉴), vv 상태 줄, mset 메뉴·목록·색깔표, 모든 대화상자에서 쓸 수 있고, mff·mf·mcopy의 자체 화면은 대화상자와 휠만 됩니다.
 - Alt·Ctrl만 누르고 있을 때 나오는 키 안내 줄은 보통 터미널에서는 나오지 않습니다.
 - ZIP은 내장 기능으로 다루고, 다른 압축 형식은 해당 압축 프로그램이 설치되어 있어야 합니다.
 - 옛 `M.CFG`(이진 형식)는 읽지 못하고, 설정은 텍스트 형식으로 저장합니다.
@@ -144,7 +144,7 @@ Mouse: click moves the bar, double click runs or enters, the wheel scrolls; the 
 ### Differences from the original
 
 - No floppy drives today, so disk copy and format work on disk image files.
-- The mouse works in m's file list, MCD tree, function-key line, menus and dialogs; the other tools' own screens only take dialog clicks and the wheel.
+- The mouse works in m (file list, MCD tree, function-key line, menus), vv's status line, mset's menus, lists and colour picker, and every dialog; mff, mf and mcopy's own screens only take dialog clicks and the wheel.
 - The key hint line shown while holding Alt or Ctrl doesn't appear in most terminals.
 - ZIP is built in; other archive formats need their archiver installed.
 - The old binary `M.CFG` can't be read; settings are saved as text.

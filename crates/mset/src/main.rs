@@ -534,8 +534,11 @@ impl Tui for Mset {
         let hi = hi_of(a);
         preview(b, &c, 1, 2);
         if self.hidden {
+            // any click brings the menu back, as any key does
+            mdir_core::mouse::block(area.x, area.y, w, h, vec![mdir_core::mouse::key(KeyCode::Esc)]);
             return;
         }
+        let menus_live = self.ed.is_none();
         // menu bar
         putw(b, 0, 0, "", w, 0x70);
         let mut x = 1;
@@ -544,7 +547,11 @@ impl Tui for Mset {
             xs.push(x);
             let s = format!(" ^{}^ {} ", k + 1, t(ko, en));
             let (na, ha) = if k == self.m { (a, hi) } else { (0x70, 0x74) };
+            let x1 = x;
             x = put_hl(b, x, 0, &s, na, ha);
+            if menus_live {
+                mdir_core::mouse::zone(x1, 0, x - x1, 1, vec![mdir_core::mouse::key(KeyCode::Char((b'1' + k as u8) as char))], vec![]);
+            }
         }
         put(b, w.saturating_sub(18), 0, " M-dir MSET ", 0x70);
         // drop-down
@@ -559,6 +566,12 @@ impl Tui for Mset {
             let (na, ha) = if k == self.i && self.ed.is_none() { (0x70, 0x74) } else { (a, hi) };
             putw(b, x0 + 1, 2 + k as u16, "", iw - 2, na);
             put_hl(b, x0 + 2, 2 + k as u16, l, na, ha);
+            if menus_live {
+                let mut ks = vec![mdir_core::mouse::key(KeyCode::Home)];
+                ks.extend(mdir_core::mouse::times(KeyCode::Down, k));
+                ks.push(mdir_core::mouse::key(KeyCode::Enter));
+                mdir_core::mouse::zone(x0 + 1, 2 + k as u16, iw - 2, 1, ks, vec![]);
+            }
         }
         // help line
         putw(b, 0, h - 1, "", w, 0x70);
@@ -587,12 +600,22 @@ impl Tui for Mset {
                     w if *w >= 100 => format!(".{}", self.cfg.colors.ext[w - 100].0),
                     w => t(ITEM_NAMES[*w].0, ITEM_NAMES[*w].1).to_string(),
                 };
+                mdir_core::mouse::block(area.x, area.y, w, h, vec![]);
                 let (bx, by) = mdir_core::scr::center_box(b, 54, 21, a, &title);
+                let (fg0, bg0) = ((*at & 15) as usize, (*at >> 4) as usize);
                 for bgc in 0..16u8 {
                     for fgc in 0..16u8 {
                         let cell = (bgc << 4) | fgc;
                         let s = if cell == *at { "[]" } else { "Ab" };
-                        put(b, bx + 2 + fgc as u16 * 3, by + 2 + bgc as u16, s, cell);
+                        let (cx, cy) = (bx + 2 + fgc as u16 * 3, by + 2 + bgc as u16);
+                        put(b, cx, cy, s, cell);
+                        // click picks the colour, double click (or a second click) confirms it
+                        let mut ks = mdir_core::mouse::move_bar(bg0, bgc as usize);
+                        if !*bg_only {
+                            let (l, r) = (KeyCode::Left, KeyCode::Right);
+                            ks.extend(if fgc as usize >= fg0 { mdir_core::mouse::times(r, fgc as usize - fg0) } else { mdir_core::mouse::times(l, fg0 - fgc as usize) });
+                        }
+                        mdir_core::mouse::zone(cx, cy, 2, 1, ks, vec![mdir_core::mouse::key(KeyCode::Enter)]);
                     }
                 }
                 put_hl(b, bx + 2, by + 19, if *bg_only { t("^↑^^↓^ 배경색   ^Enter^ 선택   ^Esc^ 취소", "^Up^/^Down^ background  ^Enter^  ^Esc^") } else { t("^←^^→^ 글자색  ^↑^^↓^ 배경색  ^Enter^ 선택  ^Esc^ 취소", "^Left^/^Right^ text  ^Up^/^Down^ background  ^Enter^  ^Esc^") }, a, hi);
@@ -655,6 +678,8 @@ fn list_box(b: &mut Buffer, a: u8, title: &str, lines: &[String], sel: usize, ke
     let w = 60u16.min(area.width - 2);
     let h = area.height.saturating_sub(4);
     let (x, y) = (area.width - w - 1, 2);
+    // the list box takes every click: rows select (double click = Enter), elsewhere nothing
+    mdir_core::mouse::block(area.x, area.y, area.width, area.height, vec![]);
     frame(b, x, y, w, h, a, false);
     shadow(b, x, y, w, h);
     put_hl(b, x + 2, y, &format!(" {} ", title), a, hi_of(a));
@@ -663,6 +688,9 @@ fn list_box(b: &mut Buffer, a: u8, title: &str, lines: &[String], sel: usize, ke
     for (k, l) in lines.iter().enumerate().skip(top).take(vis) {
         let na = if k == sel { 0x70 } else { a };
         putw(b, x + 1, y + 1 + (k - top) as u16, &format!(" {}", l), w - 2, na);
+        let mut ks = vec![mdir_core::mouse::key(KeyCode::Home)];
+        ks.extend(mdir_core::mouse::times(KeyCode::Down, k));
+        mdir_core::mouse::zone(x + 1, y + 1 + (k - top) as u16, w - 2, 1, ks, vec![mdir_core::mouse::key(KeyCode::Enter)]);
     }
     put_hl(b, x + 2, y + h - 2, keys, a, hi_of(a));
     (x, y)
@@ -704,6 +732,40 @@ fn self_test(out: &Path) -> bool {
     s.draw(&mut b);
     let txt = screen_text(&b);
     r.step("hud", (txt.contains("메인화면") || txt.contains("Main")) && txt.contains("Path C:\\DOS"), "menu bar, drop-down, preview of the main screen and the help line are drawn");
+
+    // mouse: click the Program menu, its Extensions item, then an extension row (double click edits it)
+    mdir_core::text::set_korean(false);
+    let click = |s: &mut Mset, text: &str, double: bool| -> bool {
+        mdir_core::mouse::clear();
+        let mut b = Buffer::empty(Rect::new(0, 0, 80, 25));
+        s.draw(&mut b);
+        let Some((x, y)) = mdir_core::mouse::find_text(&b, text) else { return false };
+        for kk in mdir_core::mouse::keys_at(x, y, double) {
+            s.key(kk);
+        }
+        true
+    };
+    let c1 = click(&mut s, "2 Program", false);
+    let on_prog = s.m == 1;
+    let c2 = click(&mut s, "Extensions", false);
+    let in_list = matches!(s.ed, Some(Ed::Ext(0)));
+    let row: String = s.cfg.ext.get(2).map(|(e, p)| format!("{:<4} {}", e, p).chars().take(10).collect()).unwrap_or_default();
+    let c3 = click(&mut s, &row, false);
+    let picked = matches!(s.ed, Some(Ed::Ext(2)));
+    let c4 = click(&mut s, &row, true);
+    let editing = s.modal.is_some();
+    // colour picker: the bottom-left cell is white background, black text (0xF0)
+    s.modal = None;
+    s.ed = Some(Ed::Pick(pal::FILE, 0x07, false));
+    let c5 = click(&mut s, "Ab", false);
+    let moved = matches!(s.ed, Some(Ed::Pick(_, 0xf0, _)));
+    let c6 = click(&mut s, "[]", true);
+    let chosen = s.ed.is_none() && s.cfg.colors.items[pal::FILE] == 0xf0;
+    r.step(
+        "mouse",
+        c1 && on_prog && c2 && in_list && c3 && picked && c4 && editing && c5 && moved && c6 && chosen,
+        format!("menu click → Program: {}, item click → extension list: {}, row click → row 3: {}, double click → edit box: {}, colour click → F0: {}, double click chose it: {}", on_prog, in_list, picked, editing, moved, chosen),
+    );
     let _ = std::fs::remove_dir_all(&dir);
     let _ = r.save(out);
     r.all_passed()

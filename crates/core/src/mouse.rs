@@ -68,6 +68,19 @@ pub fn move_bar(from: usize, to: usize) -> Vec<KeyEvent> {
     }
 }
 
+/// Where `text` starts on a drawn buffer, searching from the bottom row up (so a list or tree wins
+/// over a path line above it). Used by self-tests to click on what the screen shows.
+pub fn find_text(b: &ratatui::buffer::Buffer, text: &str) -> Option<(u16, u16)> {
+    let a = b.area;
+    let want: Vec<String> = text.chars().map(|c| c.to_string()).collect();
+    let n = want.len() as u16;
+    (a.top()..a.bottom()).rev().find_map(|y| {
+        (a.left()..a.right().saturating_sub(n.saturating_sub(1)))
+            .find(|&x| want.iter().enumerate().all(|(i, w)| b[(x + i as u16, y)].symbol() == w))
+            .map(|x| (x, y))
+    })
+}
+
 #[cfg(test)]
 mod t {
     use super::*;
