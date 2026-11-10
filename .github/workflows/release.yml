@@ -1,0 +1,72 @@
+name: release
+
+# Push a tag like v0.1.0 to build every program for Linux, Windows and macOS and attach the
+# archives to a GitHub Release of that tag.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --title "M-dir $GITHUB_REF_NAME" --generate-notes
+
+  build:
+    needs: release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu, archive: tar.gz }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc, archive: zip }
+          - { os: macos-latest, target: aarch64-apple-darwin, archive: tar.gz }
+          - { os: macos-latest, target: x86_64-apple-darwin, archive: tar.gz }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup target add ${{ matrix.target }}
+      - name: Test
+        if: matrix.target != 'x86_64-apple-darwin'
+        run: cargo test --workspace --release --locked
+      - name: Build
+        run: cargo build --workspace --release --locked --target ${{ matrix.target }}
+      - name: Self-tests
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          for b in m vv mff mset mcopy mf dscman; do
+            ./target/${{ matrix.target }}/release/$b --self-test "$RUNNER_TEMP/$b.json" || { cat "$RUNNER_TEMP/$b.json"; exit 1; }
+          done
+      - name: Package
+        shell: bash
+        run: |
+          name="m-dir-${GITHUB_REF_NAME}-${{ matrix.target }}"
+          mkdir "$name"
+          ext=""
+          [ "${{ matrix.os }}" = windows-latest ] && ext=".exe"
+          for b in m vv mff mset mcopy mf dscman; do
+            cp "target/${{ matrix.target }}/release/$b$ext" "$name/"
+          done
+          cp README.md LICENSE-MIT LICENSE-APACHE CREDITS.md "$name/"
+          if [ "${{ matrix.archive }}" = zip ]; then
+            7z a "$name.zip" "$name" >/dev/null
+            echo "ASSET=$name.zip" >> "$GITHUB_ENV"
+          else
+            tar czf "$name.tar.gz" "$name"
+            echo "ASSET=$name.tar.gz" >> "$GITHUB_ENV"
+          fi
+      - name: Upload
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" "$ASSET" --clobber

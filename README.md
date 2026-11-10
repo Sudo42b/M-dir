@@ -32,7 +32,9 @@ Windows 터미널에서 돌아갑니다.
 
 ### 설치
 
-Rust 1.88 이상이 필요합니다.
+[Releases](https://github.com/Sudo42b/M-dir/releases)에서 Linux·Windows·macOS용 압축 파일을 받아 풀고 `m`(Windows는 `m.exe`)을 실행하면 됩니다. 7개 프로그램이 한 폴더에 들어 있습니다.
+
+직접 빌드하려면 Rust 1.88 이상이 필요합니다.
 
 ```sh
 git clone https://github.com/Sudo42b/M-dir
@@ -107,7 +109,9 @@ its screen layout and keys, as a terminal program written in Rust with
 
 ### Install
 
-Needs Rust 1.88 or newer.
+Download the archive for Linux, Windows or macOS from [Releases](https://github.com/Sudo42b/M-dir/releases), unpack it and run `m` (`m.exe` on Windows). All seven programs are in one folder.
+
+To build it yourself you need Rust 1.88 or newer.
 
 ```sh
 git clone https://github.com/Sudo42b/M-dir
