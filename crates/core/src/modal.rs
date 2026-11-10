@@ -265,7 +265,7 @@ impl Modal {
     }
 
     pub fn draw(&mut self, b: &mut Buffer, c: &Colors) {
-        use crate::mouse::{block, key, times, zone};
+        use crate::mouse::{block, choose, key, times, zone};
         let a = c.items[DIALOG];
         let hi = hi_of(a);
         let ar = b.area;
@@ -325,10 +325,7 @@ impl Modal {
                     let (na, ha) = if i == *sel { (0x70, 0x74) } else { (a, hi) };
                     putw(b, x + 1, yy, "", *w - 2, na);
                     put_hl(b, x + 2, yy, it, na, ha);
-                    let mut ks = vec![key(KeyCode::Home)];
-                    ks.extend(times(KeyCode::Down, i));
-                    ks.push(key(KeyCode::Enter));
-                    zone(x + 1, yy, *w - 2, 1, ks, vec![]);
+                    zone(x + 1, yy, *w - 2, 1, choose(i), vec![]);
                 }
             }
         }

@@ -184,7 +184,7 @@ pub fn draw(app: &mut App, b: &mut Buffer) {
             put(b, x0, y, &fit(&text, name_w), a);
             if e.tag == 0 && e.is_file() && cw >= 19 {
                 let n = if cw >= 24 { 11 } else { 7 };
-                let sx = x0 + 12 + u16::from(cw >= 24 && cw < 38);
+                let sx = x0 + 12 + u16::from((24..38).contains(&cw));
                 let sz = crate::list::size_field(e, n);
                 put(b, sx, y, &sz, size_attr(e, &c));
                 if sz.ends_with('M') {
@@ -235,7 +235,7 @@ pub fn draw(app: &mut App, b: &mut Buffer) {
     } else {
         let h24 = app.cfg.flag("24HOUR");
         let (size, date, time, attr) = match &cur {
-            Some(e) if e.kind == Kind::Drive => (format!("{}{}:", t("드라이브", " Drive "), e.drive.as_ref().map(|d| fsx_label(d)).unwrap_or_default()), String::new(), String::new(), String::new()),
+            Some(e) if e.kind == Kind::Drive => (format!("{}{}:", t("드라이브", " Drive "), e.drive.as_ref().map(fsx_label).unwrap_or_default()), String::new(), String::new(), String::new()),
             Some(e) if e.is_dirlike() => (t(" 디렉토리", "Directory").to_string(), fmt_date(e.mtime), fmt_time(e.mtime, h24), e.attr.text()),
             Some(e) if e.kind == Kind::File => (if e.size > 999_999_999 { format!("{:>8}M", e.size >> 20) } else { format!("{:>9}", commas(e.size)) }, fmt_date(e.mtime), fmt_time(e.mtime, h24), e.attr.text()),
             _ => (String::new(), String::new(), String::new(), String::new()),
@@ -332,10 +332,7 @@ fn draw_menu(b: &mut Buffer, app: &App, c: &Colors, m: usize, i: usize) {
         let (na, ha) = if k == i { (0x70, 0x74) } else { (a, hi) };
         putw(b, x0 + 1, y, "", iw - 2, na);
         put_hl(b, x0 + 2, y, &label, na, ha);
-        let mut ks = vec![mdir_core::mouse::key(KeyCode::Home)];
-        ks.extend(mdir_core::mouse::times(KeyCode::Down, k));
-        ks.push(mdir_core::mouse::key(KeyCode::Enter));
-        mdir_core::mouse::zone(x0 + 1, y, iw - 2, 1, ks, vec![]);
+        mdir_core::mouse::zone(x0 + 1, y, iw - 2, 1, mdir_core::mouse::choose(k), vec![]);
     }
 }
 

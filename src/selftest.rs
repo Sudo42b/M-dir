@@ -2,30 +2,13 @@
 //! results from the program's own state.
 use crate::app::{App, Mode};
 use mdir_core::cfg::Config;
+use mdir_core::mouse::click;
 use mdir_core::ratatui::buffer::Buffer;
 use mdir_core::ratatui::crossterm::event::{KeyCode, KeyModifiers};
 use mdir_core::ratatui::layout::Rect;
 use mdir_core::scr::screen_text;
 use mdir_core::term::{k, Report, Tui};
 use std::path::Path;
-
-/// Draws the screen (registering its click zones) and returns where `text` starts on it, searching
-/// from the bottom up so the path line (row 1) loses to the list or tree below it.
-fn locate(app: &mut App, text: &str) -> Option<(u16, u16)> {
-    mdir_core::mouse::clear();
-    let mut b = Buffer::empty(Rect::new(0, 0, 80, 25));
-    app.draw(&mut b);
-    mdir_core::mouse::find_text(&b, text)
-}
-
-/// Left click (or double click) at `text`'s position, through the same zones the terminal uses.
-fn click(app: &mut App, text: &str, double: bool) -> bool {
-    let Some((x, y)) = locate(app, text) else { return false };
-    for key in mdir_core::mouse::keys_at(x, y, double) {
-        app.key(key);
-    }
-    true
-}
 
 fn screen(app: &mut App) -> String {
     let mut b = Buffer::empty(Rect::new(0, 0, 80, 25));

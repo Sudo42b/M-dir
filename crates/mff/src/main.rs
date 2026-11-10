@@ -107,10 +107,10 @@ impl Mff {
     fn resort(&mut self) {
         let key = |h: &Hit| (split_ext(&h.name).0.to_lowercase(), split_ext(&h.name).1.to_lowercase());
         match self.sort {
-            'N' => self.hits.sort_by(|a, b| key(a).cmp(&key(b))),
+            'N' => self.hits.sort_by_key(key),
             'E' => self.hits.sort_by(|a, b| key(a).1.cmp(&key(b).1).then(key(a).0.cmp(&key(b).0))),
             'S' => self.hits.sort_by(|a, b| a.size.cmp(&b.size).then(key(a).cmp(&key(b)))),
-            'T' => self.hits.sort_by(|a, b| a.mtime.cmp(&b.mtime)),
+            'T' => self.hits.sort_by_key(|a| a.mtime),
             'A' => self.hits.sort_by(|a, b| a.attr.text().cmp(&b.attr.text()).then(key(a).cmp(&key(b)))),
             _ => self.hits.sort_by(|a, b| a.dir.cmp(&b.dir).then(key(a).cmp(&key(b)))),
         }

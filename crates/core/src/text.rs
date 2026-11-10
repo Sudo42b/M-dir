@@ -278,39 +278,6 @@ pub fn expand_spec(s: &str) -> String {
     s.to_string()
 }
 
-#[cfg(test)]
-mod tt {
-    use super::*;
-    #[test]
-    fn fmt() {
-        assert_eq!(commas(52925), "52,925");
-        assert_eq!(commas(1234567), "1,234,567");
-        assert_eq!(name83("COMMAND.COM", false), "COMMAND  COM");
-        assert_eq!(name83("verylongname.text", false), "verylon~ te~");
-        assert_eq!(fit("가나다", 5), "가나 ");
-    }
-    #[test]
-    fn wildcards() {
-        assert!(wild("*.doc", "M.DOC"));
-        assert!(wild(".doc", "a.doc"));
-        assert!(wild("a", "abc.txt"));
-        assert!(!wild("a", "bcd.txt"));
-        assert!(wild("a.", "a"));
-        assert!(wild("*.*", "noext"));
-        assert!(wild("?.*", "x.c"));
-    }
-    #[test]
-    fn hangul_codes() {
-        // "한" in KS = B0 FA? use encoder round trip instead
-        let (ks, _, _) = encoding_rs::EUC_KR.encode("한글 text");
-        assert_eq!(detect(&ks), Code::Ks);
-        assert_eq!(decode_as(&ks, Code::Ks), "한글 text");
-        // Johab "가" = 0x8861
-        assert_eq!(johab(&[0x88, 0x61]).0, "가");
-        assert_eq!(cp437(&[0xDA, 0xC4, 0xBF]), "┌─┐");
-    }
-}
-
 /// Local date/time fields to a SystemTime (archive entries carry DOS date/time).
 pub fn local_time(y: i32, mo: u32, d: u32, h: u32, mi: u32, s: u32) -> std::time::SystemTime {
     use chrono::TimeZone;
@@ -351,4 +318,37 @@ pub fn widen(s: &str) -> String {
         out.push(fill);
     }
     out
+}
+
+#[cfg(test)]
+mod tt {
+    use super::*;
+    #[test]
+    fn fmt() {
+        assert_eq!(commas(52925), "52,925");
+        assert_eq!(commas(1234567), "1,234,567");
+        assert_eq!(name83("COMMAND.COM", false), "COMMAND  COM");
+        assert_eq!(name83("verylongname.text", false), "verylon~ te~");
+        assert_eq!(fit("가나다", 5), "가나 ");
+    }
+    #[test]
+    fn wildcards() {
+        assert!(wild("*.doc", "M.DOC"));
+        assert!(wild(".doc", "a.doc"));
+        assert!(wild("a", "abc.txt"));
+        assert!(!wild("a", "bcd.txt"));
+        assert!(wild("a.", "a"));
+        assert!(wild("*.*", "noext"));
+        assert!(wild("?.*", "x.c"));
+    }
+    #[test]
+    fn hangul_codes() {
+        // "한" in KS = B0 FA? use encoder round trip instead
+        let (ks, _, _) = encoding_rs::EUC_KR.encode("한글 text");
+        assert_eq!(detect(&ks), Code::Ks);
+        assert_eq!(decode_as(&ks, Code::Ks), "한글 text");
+        // Johab "가" = 0x8861
+        assert_eq!(johab(&[0x88, 0x61]).0, "가");
+        assert_eq!(cp437(&[0xDA, 0xC4, 0xBF]), "┌─┐");
+    }
 }
