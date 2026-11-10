@@ -1,0 +1,13 @@
+[package]
+name = "mset"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "mset"
+path = "src/main.rs"
+
+[dependencies]
+mdir-core.workspace = true
+ratatui.workspace = true

@@ -1,0 +1,444 @@
+{
+ "version": 1,
+ "values": [
+  {
+   "name": "screen size (fixed mode)",
+   "group": "screen",
+   "value": "80x25",
+   "unit": "cells",
+   "source": "M.HLP Ctrl-E 25/28/43/50"
+  },
+  {
+   "name": "rows: function keys / Path / line / list / line / count / status",
+   "group": "screen",
+   "value": "1 / 1 / 1 / 19 / 1 / 1 / 1",
+   "unit": "rows",
+   "source": "M.EXE 0xb6e4 (list = lines-6, or lines-4 without the two lines), 0x33c8 (Path on row 1), 0x300a (list from row 3)"
+  },
+  {
+   "name": "file list rows at 25 lines",
+   "group": "screen",
+   "value": 19,
+   "unit": "rows",
+   "source": "M.EXE 0xb6e4: e3d = e4f - 5 (+2 when Alt-\\ hides the lines)"
+  },
+  {
+   "name": "Path line",
+   "group": "screen",
+   "value": "label+path in count colour, cut to 52 cells; rest of row in count highlight; Volume [..] / Work .. right-aligned",
+   "source": "M.EXE seg 114b0:2730"
+  },
+  {
+   "name": "count line",
+   "group": "screen",
+   "value": "files Str(:5) File, dirs Str(:5) Dir, bytes (14, commas) Byte, free (14)(pct%)byte free (total K/M)",
+   "source": "M.EXE seg 114b0:29bf, number format seg 25230:0512"
+  },
+  {
+   "name": "free percentage",
+   "group": "screen",
+   "value": "free div (total div 100)",
+   "source": "M.EXE seg 114b0:2b34"
+  },
+  {
+   "name": "disk size unit",
+   "group": "screen",
+   "value": "K up to 0x200B20 bytes, M above",
+   "source": "M.EXE seg 114b0:2b8x"
+  },
+  {
+   "name": "sort letter",
+   "group": "screen",
+   "value": "NESTBQ at column 79, colour = count bg + index + 9 (ascending) or + index (descending)",
+   "source": "M.EXE seg 114b0:2c3f"
+  },
+  {
+   "name": "hidden-files mark",
+   "group": "screen",
+   "value": "H at column 80, bright green on count-highlight bg",
+   "source": "M.EXE seg 114b0:2cb5"
+  },
+  {
+   "name": "status line",
+   "group": "screen",
+   "value": "size(9)│YY-MM-DD│HH:MM│attr(4)│clock or n File bytes Byte│F10=MCD│F11=QCD│F12=메뉴",
+   "source": "M.EXE 0x26f0, strings 0x24e5-0x2561"
+  },
+  {
+   "name": "status clock",
+   "group": "screen",
+   "value": "YY-MM-DD, day (일..토 / SUN..SAT), H:MM:SS (+am/pm when 12-hour), refreshed about every 0.5 s (BIOS ticks div 9)",
+   "source": "M.EXE 0x212e"
+  },
+  {
+   "name": "Alt/Ctrl hint line",
+   "group": "screen",
+   "value": "BIOS shift flags 0040:0017 bits 2-3 replace the status line with the Alt or Ctrl hint list",
+   "source": "M.EXE 0x26f0"
+  },
+  {
+   "name": "selection bar",
+   "group": "screen",
+   "value": "black text on the item's colour ((fg&15)<<4), 0x70 when that is 0 or in mono",
+   "unit": "attr",
+   "source": "M.EXE 0x33c8"
+  },
+  {
+   "name": "size column",
+   "group": "screen",
+   "value": "11 cells with commas, {MB}M from 1,000,000,000; mode 4: 7 cells, plain below 1,000,000 else tenths of MB + M",
+   "source": "M.EXE seg 114b0:0633"
+  },
+  {
+   "name": "size column colour",
+   "group": "screen",
+   "value": "other-files colour; read-only/system yellow (+14), hidden bright magenta (+13); unit M bright red (+12)",
+   "unit": "attr",
+   "source": "M.EXE seg 114b0:0633"
+  },
+  {
+   "name": "directory size text",
+   "group": "screen",
+   "value": "' [ SubDir ]', ' [ Up-Dir ]', ' [ CurDir ]', mode 4 '   DIR '",
+   "source": "M.EXE seg 114b0:0604-0624"
+  },
+  {
+   "name": "scroll bar",
+   "group": "screen",
+   "value": "last column over the list; track 0xB0, thumb 0x88 (mono 0x70/0x07), thumb = rows*page/total",
+   "source": "M.EXE 0x300a"
+  },
+  {
+   "name": "entry width in 2-column mode",
+   "group": "screen",
+   "value": 38,
+   "unit": "cells",
+   "source": "M.DOC sample 'COMMAND  COM     52,925 93-03-10  6:00'"
+  },
+  {
+   "name": "columns per line",
+   "group": "screen",
+   "value": "1-6, auto",
+   "source": "M.HLP Alt-1..6, Alt-0"
+  },
+  {
+   "name": "auto columns max without 5,6 mode",
+   "group": "screen",
+   "value": 4,
+   "unit": "columns",
+   "source": "MSET.DOC 컬럼수 자동조정 (5,6모드 질문)"
+  },
+  {
+   "name": "list order",
+   "group": "screen",
+   "value": "column-major (down, then right)",
+   "source": "M.DOC sample screen"
+  },
+  {
+   "name": "order of entries",
+   "group": "screen",
+   "value": "Up-Dir, dirs, files, drives; dirs and files sorted separately",
+   "source": "M.EXE seg 114b0:3e2e"
+  },
+  {
+   "name": "comparators",
+   "group": "sort",
+   "value": "name: first char, 8-char name, then ext; exec: BAT, BTM, COM, EXE first, then by name",
+   "source": "M.EXE seg 114b0:2e1f, 319b (strings 318b)"
+  },
+  {
+   "name": "ascending / descending",
+   "group": "sort",
+   "value": "separate comparator per sort (asc 2e1f..319b, desc 357d..3933)",
+   "source": "M.EXE seg 114b0:3e2e"
+  },
+  {
+   "name": "colour item → variable",
+   "group": "colors",
+   "value": "MCD e41, MCD status e42, dir e3e, drive e40, lines e3f, fkey e46/e47, count e4b/e4a, files e48, help e43, search e44/e50, dialog e45",
+   "source": "M.EXE seg 0cc50:1688-1777 (config load)"
+  },
+  {
+   "name": "default colour file",
+   "group": "colors",
+   "value": "BLACK.COL",
+   "source": "MSET.DOC 색깔부르기 (BLACK.COL 초기치); BLACK.COL offset 0x48"
+  },
+  {
+   "name": "directory",
+   "group": "colors",
+   "value": "0C",
+   "unit": "attr",
+   "source": "BLACK.COL 0x4C"
+  },
+  {
+   "name": "drive name",
+   "group": "colors",
+   "value": "06",
+   "unit": "attr",
+   "source": "BLACK.COL 0x4E"
+  },
+  {
+   "name": "main screen lines",
+   "group": "colors",
+   "value": "03",
+   "unit": "attr",
+   "source": "BLACK.COL 0x50"
+  },
+  {
+   "name": "function key normal / highlight",
+   "group": "colors",
+   "value": "3F / 3E",
+   "unit": "attr",
+   "source": "BLACK.COL 0x52, 0x54"
+  },
+  {
+   "name": "count line normal / highlight",
+   "group": "colors",
+   "value": "70 / 7F",
+   "unit": "attr",
+   "source": "BLACK.COL 0x56, 0x58"
+  },
+  {
+   "name": "other files",
+   "group": "colors",
+   "value": "07",
+   "unit": "attr",
+   "source": "BLACK.COL 0x5A"
+  },
+  {
+   "name": "help",
+   "group": "colors",
+   "value": "6E",
+   "unit": "attr",
+   "source": "BLACK.COL 0x5C"
+  },
+  {
+   "name": "speed search main / MCD",
+   "group": "colors",
+   "value": "1F / 5F",
+   "unit": "attr",
+   "source": "BLACK.COL 0x5E, 0x60"
+  },
+  {
+   "name": "dialog",
+   "group": "colors",
+   "value": "9F",
+   "unit": "attr",
+   "source": "BLACK.COL 0x62"
+  },
+  {
+   "name": "MCD tree / status",
+   "group": "colors",
+   "value": "9F / F4",
+   "unit": "attr",
+   "source": "BLACK.COL 0x48, 0x4A"
+  },
+  {
+   "name": "EXE / COM / BAT",
+   "group": "colors",
+   "value": "0A / 0B / 0E",
+   "unit": "attr",
+   "source": "BLACK.COL extension table 0x85.. (names at 0x11B)"
+  },
+  {
+   "name": "archives",
+   "group": "colors",
+   "value": "0D",
+   "unit": "attr",
+   "source": "BLACK.COL extension table"
+  },
+  {
+   "name": "tagged file",
+   "group": "colors",
+   "value": "blue background",
+   "estimated": true
+  },
+  {
+   "name": "files per directory",
+   "group": "limits",
+   "value": "no limit (original 2000)",
+   "source": "M.DOC 제한사항: 2000; not needed today"
+  },
+  {
+   "name": "MCD directories per drive",
+   "group": "limits",
+   "value": 20000,
+   "unit": "dirs",
+   "source": "original 2000 (M.DOC 제한사항); raised for modern disks"
+  },
+  {
+   "name": "description length",
+   "group": "limits",
+   "value": 80,
+   "unit": "chars",
+   "source": "M.DOC 주석: 입력/수정시 최대 80자"
+  },
+  {
+   "name": "dos command history",
+   "group": "limits",
+   "value": 20,
+   "unit": "commands",
+   "source": "M.DOC 도스명령: 최대 20개"
+  },
+  {
+   "name": "QCD directories",
+   "group": "limits",
+   "value": 10,
+   "unit": "dirs",
+   "source": "M.DOC QCD"
+  },
+  {
+   "name": "function keys",
+   "group": "limits",
+   "value": 28,
+   "unit": "keys",
+   "source": "M.DOC / MSET.DOC: F2-F9, Ctrl-F1..F10, Alt-F1..F10"
+  },
+  {
+   "name": "commands per key/extension",
+   "group": "limits",
+   "value": 20,
+   "unit": "commands",
+   "source": "MSET.DOC: ;로 구분해 최대 20개, 255자"
+  },
+  {
+   "name": "extension programs",
+   "group": "limits",
+   "value": 100,
+   "unit": "extensions",
+   "source": "MSET.DOC 확장자지정 최대 100개"
+  },
+  {
+   "name": "filter specs",
+   "group": "limits",
+   "value": 15,
+   "unit": "specs",
+   "source": "M.DOC Alt-F: 최대 15개"
+  },
+  {
+   "name": "%[EXT] nesting before 'Bad program definition'",
+   "group": "limits",
+   "value": 8,
+   "unit": "levels",
+   "estimated": true
+  },
+  {
+   "name": "speed search",
+   "group": "keys",
+   "value": "lower-case letters, digits; Ctrl-L next; BS edit; Esc cancel",
+   "source": "M.DOC 선택막대"
+  },
+  {
+   "name": "drive change",
+   "group": "keys",
+   "value": "Shift-letter (upper case)",
+   "source": "M.DOC 드라이브"
+  },
+  {
+   "name": "PgUp/PgDn",
+   "group": "keys",
+   "value": "first/last on screen, then previous/next screen",
+   "source": "M.DOC 선택막대"
+  },
+  {
+   "name": "Esc on main screen",
+   "group": "keys",
+   "value": "nothing (MSET choice)",
+   "estimated": true
+  },
+  {
+   "name": "delete prompt default",
+   "group": "keys",
+   "value": "No",
+   "estimated": true
+  },
+  {
+   "name": "auto line (Alt-=)",
+   "group": "keys",
+   "value": "use all terminal lines (off = 80x25)",
+   "source": "M.HLP Alt-= fit lines on screen automatically"
+  },
+  {
+   "name": "horizontal line (Alt-\\)",
+   "group": "keys",
+   "value": "the two lines around the file list",
+   "source": "M.DOC Alt-\\ 가로구분선"
+  },
+  {
+   "name": "screen saver delay unit",
+   "group": "timers",
+   "value": "SAVETIME minutes x 1092 BIOS ticks (about 60 s)",
+   "source": "M.EXE seg 0cc50:15ae-15cf"
+  },
+  {
+   "name": "screen saver delay default",
+   "group": "timers",
+   "value": 5,
+   "unit": "minutes",
+   "estimated": true
+  },
+  {
+   "name": "idle poll",
+   "group": "timers",
+   "value": 250,
+   "unit": "ms",
+   "estimated": true
+  },
+  {
+   "name": "viewed directly",
+   "group": "archives",
+   "value": "ZIP, ZIP SFX",
+   "source": "M.DOC 압축파일 (ZIP family read natively here)"
+  },
+  {
+   "name": "other kinds",
+   "group": "archives",
+   "value": "LZH ICE ARJ ARC OMP ZOO SQZ RAR UC2 HPK ACE via their programs",
+   "source": "M.EXE command table (LHA x /a, ARJ x -a, ...)"
+  },
+  {
+   "name": "default new archive",
+   "group": "archives",
+   "value": "ZIP",
+   "estimated": true
+  },
+  {
+   "name": "descriptions",
+   "group": "files",
+   "value": "DESCRIPT.ION (4DOS)",
+   "source": "M.DOC 주석"
+  },
+  {
+   "name": "history file",
+   "group": "files",
+   "value": "M.HIS",
+   "source": "M.DOC 파일목록"
+  },
+  {
+   "name": "tree file",
+   "group": "files",
+   "value": "MDIRTREE*.DIR in the settings folder",
+   "source": "M.DOC 파일목록 (MDIRTREE.DIR)"
+  },
+  {
+   "name": "MCOPY/MF target",
+   "group": "disk tools",
+   "value": "disk image files (.IMG)",
+   "estimated": true
+  },
+  {
+   "name": "MF sizes",
+   "group": "disk tools",
+   "value": "360K, 720K, 1.2M, 1.44M",
+   "source": "MF.DOC 포맷용량"
+  },
+  {
+   "name": "MCOPY copies",
+   "group": "disk tools",
+   "value": "1-9999",
+   "unit": "copies",
+   "source": "MCOPY.DOC 9999개까지"
+  }
+ ]
+}

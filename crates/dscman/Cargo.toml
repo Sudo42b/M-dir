@@ -1,0 +1,13 @@
+[package]
+name = "dscman"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "dscman"
+path = "src/main.rs"
+
+[dependencies]
+mdir-core.workspace = true
+ratatui.workspace = true

@@ -1,0 +1,37 @@
+[workspace]
+members = [".", "crates/core", "crates/vv", "crates/mff", "crates/mset", "crates/mcopy", "crates/mf", "crates/dscman"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Sudo42b/M-dir"
+description = "MdirIII-style Korean file manager for modern terminals"
+
+[workspace.dependencies]
+ratatui = "0.30"
+fontdue = "0.9"
+png = "0.17"
+encoding_rs = "0.8"
+mdir-core = { path = "crates/core" }
+
+[package]
+name = "mdir"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+default-run = "m"
+
+[[bin]]
+name = "m"
+path = "src/main.rs"
+
+[dependencies]
+mdir-core.workspace = true
+ratatui.workspace = true
+zip = { version = "2", default-features = false, features = ["deflate"] }
+
+[profile.release]
+opt-level = 2

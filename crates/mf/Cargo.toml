@@ -1,0 +1,13 @@
+[package]
+name = "mf"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "mf"
+path = "src/main.rs"
+
+[dependencies]
+mdir-core.workspace = true
+ratatui.workspace = true
