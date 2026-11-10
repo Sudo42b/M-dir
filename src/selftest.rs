@@ -15,10 +15,7 @@ fn locate(app: &mut App, text: &str) -> Option<(u16, u16)> {
     mdir_core::mouse::clear();
     let mut b = Buffer::empty(Rect::new(0, 0, 80, 25));
     app.draw(&mut b);
-    let want: Vec<String> = text.chars().map(|c| c.to_string()).collect();
-    (0..25u16).rev().find_map(|y| {
-        (0..80u16).find(|&x| want.iter().enumerate().all(|(i, w)| x + (i as u16) < 80 && b[(x + i as u16, y)].symbol() == w)).map(|x| (x, y))
-    })
+    mdir_core::mouse::find_text(&b, text)
 }
 
 /// Left click (or double click) at `text`'s position, through the same zones the terminal uses.

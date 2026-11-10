@@ -31,6 +31,8 @@ and shows binary files too. F9 or Alt-C switches the encoding.
 const CODES: [Code; 4] = [Code::Ks, Code::Johab, Code::English, Code::Utf8];
 
 struct Vv {
+    /// false with /U
+    mouse: bool,
     name: String,
     bytes: Vec<u8>,
     code: Code,
@@ -58,7 +60,7 @@ fn state_file() -> PathBuf {
 impl Vv {
     fn new(name: &str, bytes: Vec<u8>) -> Vv {
         let code = detect(&bytes);
-        let mut v = Vv { name: name.to_string(), bytes, code, lines: vec![], top: 0, left: 0, tab: 8, wrap: false, status: true, fg: 7, bg: 1, sfg: 0, sbg: 7, method: 0, saver: None, modal: None, rows: 23, cols: 80 };
+        let mut v = Vv { mouse: true, name: name.to_string(), bytes, code, lines: vec![], top: 0, left: 0, tab: 8, wrap: false, status: true, fg: 7, bg: 1, sfg: 0, sbg: 7, method: 0, saver: None, modal: None, rows: 23, cols: 80 };
         if let Ok(s) = std::fs::read_to_string(state_file()) {
             let n: Vec<u32> = s.split_whitespace().filter_map(|x| x.parse().ok()).collect();
             if n.len() >= 8 {
@@ -217,6 +219,21 @@ impl Tui for Vv {
             let s = if mdir_core::text::korean() { s } else { s.replace("보라", "BORA") };
             put_hl(b, 0, 0, &s, sa, shi);
             put_hl(b, w.saturating_sub(12), 0, t(" ^F1^-도움말", "  ^F1^-Help"), sa, shi);
+            // clicks on the status line: the code field switches the code (F9), F1 opens help
+            use mdir_core::mouse::{key, zone};
+            let mut x = 0u16;
+            for (n, field) in s.split('│').enumerate() {
+                let fw = mdir_core::scr::hw(field);
+                let k = match n {
+                    2 => Some(KeyCode::F(9)),
+                    _ => None,
+                };
+                if let Some(k) = k {
+                    zone(x, 0, fw, 1, vec![key(k)], vec![]);
+                }
+                x += fw + 1;
+            }
+            zone(w.saturating_sub(12), 0, 12, 1, vec![key(KeyCode::F(1))], vec![]);
         }
         if let Some(m) = self.modal.as_mut() {
             m.draw(b, &Colors::default());
@@ -297,6 +314,9 @@ impl Tui for Vv {
         Flow::Cont
     }
 
+    fn mouse(&self) -> bool {
+        self.mouse
+    }
     fn tick(&mut self) -> Flow {
         if let Some(t) = self.saver.as_mut() {
             *t += 1;
@@ -329,6 +349,26 @@ fn self_test(out: &Path) -> bool {
     let s = screen_text(&b);
     let ok = s.contains("TEST.TXT") && (s.contains("줄") || s.contains("Line")) && s.contains("line 025");
     r.step("hud", ok, "status line shows the file, code, line and column; text below it");
+
+    // mouse: the code field switches the code, F1 opens help, a click closes it
+    let click = |v: &mut Vv, text: &str| -> bool {
+        mdir_core::mouse::clear();
+        let mut b = Buffer::empty(Rect::new(0, 0, 80, 25));
+        v.draw(&mut b);
+        let Some((x, y)) = mdir_core::mouse::find_text(&b, text) else { return false };
+        for kk in mdir_core::mouse::keys_at(x, y, false) {
+            v.key(kk);
+        }
+        true
+    };
+    let before = v.code;
+    let c1 = click(&mut v, before.label());
+    let switched = v.code != before;
+    let c2 = click(&mut v, "F1");
+    let help = v.modal.is_some();
+    let c3 = click(&mut v, "line 0");
+    let closed = v.modal.is_none();
+    r.step("mouse", c1 && switched && c2 && help && c3 && closed, format!("code click {:?} -> {:?}, F1 click opened help: {}, click closed it: {}", before, v.code, help, closed));
     let _ = r.save(out);
     r.all_passed()
 }
@@ -342,7 +382,7 @@ fn main() {
     }
     let file = cli.rest.iter().find(|a| !a.starts_with('/') || Path::new(a).exists()).cloned();
     if cli.rest.iter().any(|a| a == "/?") {
-        println!("VV (M-dir) - text viewer\nUsage: vv [file] [/options]\n  /N  no screen saver   /*  screen saver only   /U  no mouse (ignored)   /?  this help");
+        println!("VV (M-dir) - text viewer\nUsage: vv [file] [/options]\n  /N  no screen saver   /*  screen saver only   /U  no mouse   /?  this help");
         return;
     }
     let (name, bytes) = match &file {
@@ -356,6 +396,7 @@ fn main() {
         None => ("VV".into(), INTRO.as_bytes().to_vec()),
     };
     let mut v = Vv::new(&name, bytes);
+    v.mouse = !cli.rest.iter().any(|a| a.eq_ignore_ascii_case("/U"));
     if cli.rest.iter().any(|a| a == "/*") {
         v.saver = Some(0);
     }
