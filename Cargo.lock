@@ -403,7 +403,7 @@ dependencies = [
 
 [[package]]
 name = "dscman"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "mdir-core",
  "ratatui",
@@ -822,7 +822,7 @@ dependencies = [
 
 [[package]]
 name = "mcopy"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "mdir-core",
  "ratatui",
@@ -830,7 +830,7 @@ dependencies = [
 
 [[package]]
 name = "mdir"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "mdir-core",
  "ratatui",
@@ -839,7 +839,7 @@ dependencies = [
 
 [[package]]
 name = "mdir-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "chrono",
  "encoding_rs",
@@ -873,7 +873,7 @@ dependencies = [
 
 [[package]]
 name = "mf"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "mdir-core",
  "ratatui",
@@ -881,7 +881,7 @@ dependencies = [
 
 [[package]]
 name = "mff"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "mdir-core",
  "ratatui",
@@ -927,7 +927,7 @@ dependencies = [
 
 [[package]]
 name = "mset"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "mdir-core",
  "ratatui",
@@ -1868,7 +1868,7 @@ dependencies = [
 
 [[package]]
 name = "vv"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "mdir-core",
  "ratatui",
