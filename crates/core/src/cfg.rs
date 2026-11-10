@@ -450,7 +450,8 @@ mod tests {
         let e = expand("dir%%", &ctx).unwrap();
         assert!(e.pause);
         assert_eq!(e.cmd, "dir");
-        assert_eq!(expand("cat !\\!.!", &ctx).unwrap().cmd, "cat /home/u/doc/TEST.DOC");
+        // the directory and file are joined with the platform's separator
+        assert_eq!(expand("cat !\\!.!", &ctx).unwrap().cmd, format!("cat /home/u/doc{}TEST.DOC", std::path::MAIN_SEPARATOR));
         assert_eq!(alternatives("a;b %; c;;d"), vec!["a", "b %; c", "d"]);
     }
 }
