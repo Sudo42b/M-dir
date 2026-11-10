@@ -82,8 +82,9 @@ something clickable, register a zone next to the code that draws it, with the ke
 would press. M's mouse can be turned off with the M.CFG option `MOUSE`.
 
 Clickable today: m's file list (click = move bar, double click = Enter), function-key line,
-F10/F11/F12 on the status line, pull-down menus, F1 help (click closes), and every `Modal` in every
-tool. Not yet: MCD tree, VV/mset/mff/mf/mcopy's own screens beyond their dialogs (wheel works).
+F10/F11/F12 on the status line, pull-down menus, F1 help (click closes), the MCD tree (click =
+move bar via `Mcd::keys_to`, double click = go there) and its function-key line, and every `Modal`
+in every tool. Not yet: VV/mset/mff/mf/mcopy's own screens beyond their dialogs (wheel works).
 
 ## Build and verify
 
@@ -117,7 +118,7 @@ regenerated `MECHANICS.md` and `mechanics.json` with the code. If you confirm an
 - The Alt/Ctrl hint line can't appear: terminals don't report a modifier pressed alone.
 - Old binary `M.CFG` files can't be read.
 - Archives other than ZIP need the archiver installed.
-- Mouse: MCD tree and the tools' own non-dialog screens.
+- Mouse: the tools' own non-dialog screens (vv, mset, mff, mf, mcopy).
 
 ## Pull requests
 
