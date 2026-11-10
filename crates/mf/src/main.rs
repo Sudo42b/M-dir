@@ -265,6 +265,20 @@ fn self_test(out: &Path) -> bool {
     m.draw(&mut b);
     let s = screen_text(&b);
     r.step("hud", s.contains("INFO") && s.contains("1.44M"), "menu and INFO box (drive, size, mode, verify, direction) are drawn");
+
+    // mouse: a command click runs it, a status-line hint click presses its key
+    use mdir_core::mouse::click;
+    mdir_core::text::set_korean(false);
+    let (v0, f0) = (m.verify, m.forward);
+    let c1 = click(&mut m, "Verify            F6", false);
+    let c2 = click(&mut m, "F7-Direction", false);
+    let c3 = click(&mut m, "F3-Drive", false);
+    let drive_box = matches!(&m.modal, Some((Modal::Input { .. }, _)));
+    r.step(
+        "mouse",
+        c1 && m.verify != v0 && c2 && m.forward != f0 && c3 && drive_box,
+        format!("Verify click toggled verify: {}, Direction click toggled direction: {}, F3 hint opened the drive box: {}", m.verify != v0, m.forward != f0, drive_box),
+    );
     let _ = std::fs::remove_file(&img);
     let _ = r.save(out);
     r.all_passed()
