@@ -1437,4 +1437,7 @@ impl mdir_core::term::Tui for App {
     fn after_run(&mut self) {
         App::after_run(self)
     }
+    fn mouse(&self) -> bool {
+        self.cfg.flag("MOUSE")
+    }
 }

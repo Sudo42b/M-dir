@@ -1,5 +1,5 @@
 """Writes MECHANICS.md and mechanics.json from one table, so both stay the same.
-Run from app/: python3 tools/gen_mechanics.py"""
+Run from the repo root: python3 tools/gen_mechanics.py"""
 import json
 
 V = [

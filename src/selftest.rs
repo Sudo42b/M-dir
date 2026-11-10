@@ -9,6 +9,26 @@ use mdir_core::scr::screen_text;
 use mdir_core::term::{k, Report, Tui};
 use std::path::Path;
 
+/// Draws the screen (registering its click zones) and returns where `text` starts on it.
+fn locate(app: &mut App, text: &str) -> Option<(u16, u16)> {
+    mdir_core::mouse::clear();
+    let mut b = Buffer::empty(Rect::new(0, 0, 80, 25));
+    app.draw(&mut b);
+    let want: Vec<String> = text.chars().map(|c| c.to_string()).collect();
+    (0..25u16).find_map(|y| {
+        (0..80u16).find(|&x| want.iter().enumerate().all(|(i, w)| x + (i as u16) < 80 && b[(x + i as u16, y)].symbol() == w)).map(|x| (x, y))
+    })
+}
+
+/// Left click (or double click) at `text`'s position, through the same zones the terminal uses.
+fn click(app: &mut App, text: &str, double: bool) -> bool {
+    let Some((x, y)) = locate(app, text) else { return false };
+    for key in mdir_core::mouse::keys_at(x, y, double) {
+        app.key(key);
+    }
+    true
+}
+
 fn screen(app: &mut App) -> String {
     let mut b = Buffer::empty(Rect::new(0, 0, 80, 25));
     app.draw(&mut b);
@@ -75,6 +95,22 @@ pub fn run(out: &Path) -> bool {
     ];
     let missing: Vec<&str> = checks.iter().filter(|c| !c.1).map(|c| c.0).collect();
     r.step("hud", missing.is_empty(), if missing.is_empty() { "function-key line, Path line, file list, count line and status line are drawn".to_string() } else { format!("missing: {}", missing.join(", ")) });
+
+    // mouse: a click moves the bar, a double click enters a directory, F12 on the status line
+    // opens the menu and a click outside it closes it
+    let hit = click(&mut app, "BETA", false);
+    let on = app.cur_entry().map(|e| e.name.clone()).unwrap_or_default();
+    let hit2 = click(&mut app, "SUB", false) && click(&mut app, "SUB", true);
+    let entered = app.dir.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
+    let hit3 = click(&mut app, "F12", false);
+    let menu = matches!(app.mode, Mode::Menu { .. });
+    let hit4 = click(&mut app, "1 File", false);
+    let closed = matches!(app.mode, Mode::Main);
+    r.step(
+        "mouse",
+        hit && on == "BETA.DOC" && hit2 && entered == "SUB" && hit3 && menu && hit4 && closed,
+        format!("click put the bar on {}, double click entered {}, F12 click opened the menu: {}, click outside closed it: {}", on, entered, menu, closed),
+    );
 
     let _ = std::fs::remove_dir_all(&root);
     let _ = r.save(out);
