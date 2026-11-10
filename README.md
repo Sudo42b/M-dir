@@ -1,5 +1,9 @@
 # M-dir
 
+[![Release](https://img.shields.io/github/v/release/Sudo42b/M-dir)](https://github.com/Sudo42b/M-dir/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Sudo42b/M-dir/total)](https://github.com/Sudo42b/M-dir/releases)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](#license)
+
 **MdirIII를 기억하시나요? 그 파일 관리자를 지금의 터미널에서 다시 씁니다.**
 **The classic Korean DOS file manager, MdirIII, rebuilt in Rust for modern terminals.**
 
