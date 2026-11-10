@@ -130,3 +130,9 @@ regenerated `MECHANICS.md` and `mechanics.json` with the code. If you confirm an
 - In the PR, say what you verified (tests, self-tests, screenshots) and what you couldn't.
 - Update README (both languages) when user-visible behaviour changes, and MECHANICS.md when a rule
   or number changes.
+
+## Releases
+
+Bump `version` in `Cargo.toml`, merge, then push a tag `vX.Y.Z` on `main`.
+`.github/workflows/release.yml` creates the GitHub Release, runs the tests (and the self-tests on
+Linux) and uploads archives for Linux x86_64, Windows x86_64 and macOS arm64/x86_64.
