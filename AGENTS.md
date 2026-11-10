@@ -79,7 +79,8 @@ Clicks never have their own logic. While drawing, code registers zones with
 under the pointer (double click adds `double_keys`). Dialogs and menus first call `mouse::block`
 over the whole screen so clicks can't reach what's underneath. The wheel sends Up/Down ×3. To make
 something clickable, register a zone next to the code that draws it, with the keys a keyboard user
-would press. M's mouse can be turned off with the M.CFG option `MOUSE`.
+would press; for list rows use `mouse::select(k)` (Home + Down×k) or `mouse::choose(k)` (… + Enter).
+M's mouse can be turned off with the M.CFG option `MOUSE`.
 
 Clickable today: m's file list (click = move bar, double click = Enter), function-key line,
 F10/F11/F12 on the status line, pull-down menus, F1 help (click closes), the MCD tree (click =
@@ -100,10 +101,11 @@ MDIR_LANG=en ./target/release/m --screenshot /tmp/m-en.png
 
 - Every tool supports `--self-test <json>` (scripted keys in a temp folder, three or more steps)
   and `--screenshot <png>`. When you add behaviour, add a step to that tool's self-test; for m it
-  is `src/selftest.rs` (it can click through `mouse::keys_at`).
+  is `src/selftest.rs`. `mouse::click(&mut app, "text", double)` clicks what the screen shows.
 - Check both languages and an 80×25 screen when you change layout.
-- The code is **not** rustfmt-formatted and has a few old clippy warnings. Don't reformat or fix
-  files you aren't otherwise changing; keep diffs to what your change needs.
+- `cargo clippy --workspace --all-targets` is clean; keep it that way.
+- The code is **not** rustfmt-formatted. Don't reformat files you aren't otherwise changing; keep
+  diffs to what your change needs.
 
 ## MECHANICS.md
 

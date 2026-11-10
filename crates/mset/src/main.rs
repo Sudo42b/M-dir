@@ -567,10 +567,7 @@ impl Tui for Mset {
             putw(b, x0 + 1, 2 + k as u16, "", iw - 2, na);
             put_hl(b, x0 + 2, 2 + k as u16, l, na, ha);
             if menus_live {
-                let mut ks = vec![mdir_core::mouse::key(KeyCode::Home)];
-                ks.extend(mdir_core::mouse::times(KeyCode::Down, k));
-                ks.push(mdir_core::mouse::key(KeyCode::Enter));
-                mdir_core::mouse::zone(x0 + 1, 2 + k as u16, iw - 2, 1, ks, vec![]);
+                mdir_core::mouse::zone(x0 + 1, 2 + k as u16, iw - 2, 1, mdir_core::mouse::choose(k), vec![]);
             }
         }
         // help line
@@ -688,9 +685,7 @@ fn list_box(b: &mut Buffer, a: u8, title: &str, lines: &[String], sel: usize, ke
     for (k, l) in lines.iter().enumerate().skip(top).take(vis) {
         let na = if k == sel { 0x70 } else { a };
         putw(b, x + 1, y + 1 + (k - top) as u16, &format!(" {}", l), w - 2, na);
-        let mut ks = vec![mdir_core::mouse::key(KeyCode::Home)];
-        ks.extend(mdir_core::mouse::times(KeyCode::Down, k));
-        mdir_core::mouse::zone(x + 1, y + 1 + (k - top) as u16, w - 2, 1, ks, vec![mdir_core::mouse::key(KeyCode::Enter)]);
+        mdir_core::mouse::zone(x + 1, y + 1 + (k - top) as u16, w - 2, 1, mdir_core::mouse::select(k), vec![mdir_core::mouse::key(KeyCode::Enter)]);
     }
     put_hl(b, x + 2, y + h - 2, keys, a, hi_of(a));
     (x, y)
@@ -735,16 +730,7 @@ fn self_test(out: &Path) -> bool {
 
     // mouse: click the Program menu, its Extensions item, then an extension row (double click edits it)
     mdir_core::text::set_korean(false);
-    let click = |s: &mut Mset, text: &str, double: bool| -> bool {
-        mdir_core::mouse::clear();
-        let mut b = Buffer::empty(Rect::new(0, 0, 80, 25));
-        s.draw(&mut b);
-        let Some((x, y)) = mdir_core::mouse::find_text(&b, text) else { return false };
-        for kk in mdir_core::mouse::keys_at(x, y, double) {
-            s.key(kk);
-        }
-        true
-    };
+    use mdir_core::mouse::click;
     let c1 = click(&mut s, "2 Program", false);
     let on_prog = s.m == 1;
     let c2 = click(&mut s, "Extensions", false);

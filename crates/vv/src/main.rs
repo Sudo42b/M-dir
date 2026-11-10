@@ -351,22 +351,13 @@ fn self_test(out: &Path) -> bool {
     r.step("hud", ok, "status line shows the file, code, line and column; text below it");
 
     // mouse: the code field switches the code, F1 opens help, a click closes it
-    let click = |v: &mut Vv, text: &str| -> bool {
-        mdir_core::mouse::clear();
-        let mut b = Buffer::empty(Rect::new(0, 0, 80, 25));
-        v.draw(&mut b);
-        let Some((x, y)) = mdir_core::mouse::find_text(&b, text) else { return false };
-        for kk in mdir_core::mouse::keys_at(x, y, false) {
-            v.key(kk);
-        }
-        true
-    };
+    use mdir_core::mouse::click;
     let before = v.code;
-    let c1 = click(&mut v, before.label());
+    let c1 = click(&mut v, before.label(), false);
     let switched = v.code != before;
-    let c2 = click(&mut v, "F1");
+    let c2 = click(&mut v, "F1", false);
     let help = v.modal.is_some();
-    let c3 = click(&mut v, "line 0");
+    let c3 = click(&mut v, "line 0", false);
     let closed = v.modal.is_none();
     r.step("mouse", c1 && switched && c2 && help && c3 && closed, format!("code click {:?} -> {:?}, F1 click opened help: {}, click closed it: {}", before, v.code, help, closed));
     let _ = r.save(out);

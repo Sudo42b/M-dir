@@ -59,6 +59,33 @@ pub fn times(code: KeyCode, n: usize) -> Vec<KeyEvent> {
     vec![key(code); n]
 }
 
+/// Keys that put a list's bar on item `k`: Home, then Down k times.
+pub fn select(k: usize) -> Vec<KeyEvent> {
+    let mut ks = vec![key(KeyCode::Home)];
+    ks.extend(times(KeyCode::Down, k));
+    ks
+}
+
+/// `select(k)` followed by Enter.
+pub fn choose(k: usize) -> Vec<KeyEvent> {
+    let mut ks = select(k);
+    ks.push(key(KeyCode::Enter));
+    ks
+}
+
+/// Self-test helper: draws `app` on an 80×25 screen, finds `text` (bottom row first) and clicks
+/// it through the registered zones. False when the text isn't on the screen.
+pub fn click<T: crate::term::Tui>(app: &mut T, text: &str, double: bool) -> bool {
+    clear();
+    let mut b = ratatui::buffer::Buffer::empty(ratatui::layout::Rect::new(0, 0, 80, 25));
+    app.draw(&mut b);
+    let Some((x, y)) = find_text(&b, text) else { return false };
+    for k in keys_at(x, y, double) {
+        app.key(k);
+    }
+    true
+}
+
 /// Keys that move a bar from `from` to `to` with Up/Down.
 pub fn move_bar(from: usize, to: usize) -> Vec<KeyEvent> {
     if to >= from {
@@ -94,5 +121,6 @@ mod t {
         assert_eq!(keys_at(3, 3, true), vec![key(KeyCode::Esc)]);
         assert!(keys_at(20, 20, false).is_empty());
         assert_eq!(move_bar(5, 2), times(KeyCode::Up, 3));
+        assert_eq!(choose(2), vec![key(KeyCode::Home), key(KeyCode::Down), key(KeyCode::Down), key(KeyCode::Enter)]);
     }
 }
