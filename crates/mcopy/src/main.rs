@@ -227,6 +227,16 @@ fn self_test(out: &Path) -> bool {
     m.draw(&mut b);
     let s = screen_text(&b);
     r.step("hud", s.contains("INFO") && (s.contains("복사매수") || s.contains("Number of Copy")) && s.contains("Track"), "menu, INFO box (source, target, write, format, copies) and the track/head progress are drawn");
+
+    // mouse: a command click runs it, a status-line hint click presses its key
+    use mdir_core::mouse::click;
+    mdir_core::text::set_korean(false);
+    let c1 = click(&mut m, "Source  ", false);
+    let src_box = matches!(&m.modal, Some((Modal::Input { .. }, _)));
+    m.modal = None;
+    let c2 = click(&mut m, "F4-Target", false);
+    let dst_box = matches!(&m.modal, Some((Modal::Input { .. }, _)));
+    r.step("mouse", c1 && src_box && c2 && dst_box, format!("Source click opened the source box: {}, F4 hint opened the target box: {}", src_box, dst_box));
     let _ = std::fs::remove_dir_all(&dir);
     let _ = r.save(out);
     r.all_passed()

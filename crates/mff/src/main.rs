@@ -164,6 +164,7 @@ impl Tui for Mff {
         }
         self.rows = (h as usize).saturating_sub(3).max(1);
         if self.searching {
+            mdir_core::mouse::block(area.x, area.y, w, h, vec![]);
             let (x, y) = center_box(b, 64, 6, c.items[pal::DIALOG], t("파일찾기", "FileFind"));
             let a = c.items[pal::DIALOG];
             put(b, x + 2, y + 2, &fit(&format!("Searching for {}", self.scanning), 60), a);
@@ -186,6 +187,9 @@ impl Tui for Mff {
                     a = pal::bar(a);
                 }
                 put(b, 0, y, &self.line(hh, w as usize), a);
+                let mut ks = if self.search.is_some() { vec![mdir_core::mouse::key(KeyCode::Esc)] } else { vec![] };
+                ks.extend(mdir_core::mouse::move_bar(self.cur, i));
+                mdir_core::mouse::zone(0, y, w, 1, ks, vec![mdir_core::mouse::key(KeyCode::Enter)]);
             }
             let py = h - 2;
             let pa = c.items[pal::COUNT];
@@ -437,6 +441,29 @@ fn self_test(out: &Path) -> bool {
     m.draw(&mut b);
     let s = screen_text(&b);
     r.step("hud", s.contains("File") && s.contains("selected") && s.contains("/3"), "file list, path line with [n/total] and the File/Bytes selected line are drawn");
+
+    // mouse: a click on a row moves the bar there, a double click chooses the file
+    use mdir_core::mouse::{clear, find_text, keys_at};
+    m.goto = None;
+    // find the row once: after the first click the path line shows the name too
+    clear();
+    let mut b = Buffer::empty(Rect::new(0, 0, 80, 25));
+    m.draw(&mut b);
+    let row = find_text(&b, "FOUR");
+    let press = |m: &mut Mff, double: bool| {
+        let Some((x, y)) = row else { return false };
+        clear();
+        m.draw(&mut Buffer::empty(Rect::new(0, 0, 80, 25)));
+        for kk in keys_at(x, y, double) {
+            m.key(kk);
+        }
+        true
+    };
+    let c1 = press(&mut m, false);
+    let on = m.hits.get(m.cur).map(|h| h.name.clone()).unwrap_or_default();
+    let c2 = press(&mut m, true);
+    let chose = m.goto.clone().map(|p| p.display().to_string()).unwrap_or_default();
+    r.step("mouse", c1 && on == "FOUR.DOC" && c2 && chose.ends_with("FOUR.DOC"), format!("row click put the bar on {}, double click chose {}", on, chose));
     let _ = std::fs::remove_dir_all(&root);
     let _ = r.save(out);
     r.all_passed()
