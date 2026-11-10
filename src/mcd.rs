@@ -450,6 +450,25 @@ impl Mcd {
         self.cur = 0;
     }
 
+    /// Keys that move the bar to node `i`: Home, then Right into each level and Down along its
+    /// siblings. A running speed search is left first.
+    fn keys_to(&self, i: usize) -> Vec<KeyEvent> {
+        use mdir_core::mouse::{key, times};
+        let mut path = vec![];
+        let mut n = i;
+        while let Some(p) = self.nodes[n].parent {
+            path.push((p, n));
+            n = p;
+        }
+        let mut ks = if self.search.is_some() { vec![key(KeyCode::Esc)] } else { vec![] };
+        ks.push(key(KeyCode::Home));
+        for (p, c) in path.into_iter().rev() {
+            ks.push(key(KeyCode::Right));
+            ks.extend(times(KeyCode::Down, self.nodes[p].children.iter().position(|&x| x == c).unwrap_or(0)));
+        }
+        ks
+    }
+
     fn step(&mut self, d: isize) {
         let ord = self.order();
         let p = ord.iter().position(|&i| i == self.cur).unwrap_or(0) as isize + d;
@@ -498,6 +517,11 @@ impl Mcd {
             let shown = fit(&nd.name, 12);
             let a = if i == self.cur { pal::bar(tree) } else { tree };
             set(x, nd.row, &shown, a);
+            if nd.row >= self.top && nd.row < self.top + rows && x >= left && x - left < w {
+                // click moves the bar to this directory, double click goes there
+                let zx = (x - left) as u16;
+                mdir_core::mouse::zone(zx, (y0 + nd.row - self.top) as u16, 12.min(w - (x - left)) as u16, 1, self.keys_to(i), vec![mdir_core::mouse::key(KeyCode::Enter)]);
+            }
             if !nd.children.is_empty() {
                 let last = *nd.children.last().unwrap();
                 set(x + 12, nd.row, if nd.children.len() > 1 { "─┬──" } else { "────" }, tree);
@@ -519,6 +543,12 @@ impl Mcd {
         };
         let x = put_hl(b, 0, fy, &format!("^[{}]^ ", fit(dir_label, 8)), st, hi);
         put_hl(b, x, fy, keys, st, hi);
+        let mut kx = x;
+        for (n, label) in keys.split(' ').enumerate() {
+            let lw = mdir_core::scr::hw(label);
+            mdir_core::mouse::zone(kx, fy, lw, 1, vec![mdir_core::mouse::key(KeyCode::F(n as u8 + 1))], vec![]);
+            kx += lw + 1;
+        }
     }
 }
 

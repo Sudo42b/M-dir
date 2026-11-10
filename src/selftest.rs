@@ -9,13 +9,14 @@ use mdir_core::scr::screen_text;
 use mdir_core::term::{k, Report, Tui};
 use std::path::Path;
 
-/// Draws the screen (registering its click zones) and returns where `text` starts on it.
+/// Draws the screen (registering its click zones) and returns where `text` starts on it, searching
+/// from the bottom up so the path line (row 1) loses to the list or tree below it.
 fn locate(app: &mut App, text: &str) -> Option<(u16, u16)> {
     mdir_core::mouse::clear();
     let mut b = Buffer::empty(Rect::new(0, 0, 80, 25));
     app.draw(&mut b);
     let want: Vec<String> = text.chars().map(|c| c.to_string()).collect();
-    (0..25u16).find_map(|y| {
+    (0..25u16).rev().find_map(|y| {
         (0..80u16).find(|&x| want.iter().enumerate().all(|(i, w)| x + (i as u16) < 80 && b[(x + i as u16, y)].symbol() == w)).map(|x| (x, y))
     })
 }
@@ -110,6 +111,20 @@ pub fn run(out: &Path) -> bool {
         "mouse",
         hit && on == "BETA.DOC" && hit2 && entered == "SUB" && hit3 && menu && hit4 && closed,
         format!("click put the bar on {}, double click entered {}, F12 click opened the menu: {}, click outside closed it: {}", on, entered, menu, closed),
+    );
+
+    // mcd mouse: in MCD (opened from SUB) a click on the parent directory moves the bar there and
+    // a double click goes to it
+    app.key(k(KeyCode::F(10), none));
+    let parent_label: String = root.file_name().map(|s| s.to_string_lossy().chars().take(9).collect()).unwrap_or_default();
+    let hit5 = click(&mut app, &parent_label, false);
+    let bar = if let Mode::Mcd(m) = &app.mode { m.path_of(m.cur) } else { std::path::PathBuf::new() };
+    let hit6 = click(&mut app, &parent_label, true);
+    let went = app.dir.clone();
+    r.step(
+        "mcd-mouse",
+        hit5 && bar == root && hit6 && went == root,
+        format!("click in the tree put the bar on {}, double click went to {}", bar.display(), went.display()),
     );
 
     let _ = std::fs::remove_dir_all(&root);
