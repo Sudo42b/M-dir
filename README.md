@@ -64,6 +64,8 @@ cargo install --path crates/vv    # vv (다른 도구도 같은 방식)
 | `F1` | 전체 키 도움말 |
 | `Alt-X` | 끝내기 |
 
+마우스: 클릭으로 막대 이동, 더블클릭으로 실행·들어가기, 휠로 스크롤, 펑션키 줄·`F10`/`F11`/`F12`·메뉴·대화상자 클릭. 끄려면 MSET에서 마우스사용을 끕니다.
+
 ### 설정
 
 - 설정 파일: `~/.config/mdir/M.CFG` (Windows: `%APPDATA%\mdir\M.CFG`, `M_CFG` 환경변수로 바꿀 수 있음)
@@ -72,7 +74,7 @@ cargo install --path crates/vv    # vv (다른 도구도 같은 방식)
 ### 원본과 다른 점
 
 - 플로피 드라이브가 없으므로 디스크 복사·포맷은 디스크 이미지 파일을 다룹니다.
-- 마우스는 아직 지원하지 않습니다.
+- 마우스는 m의 파일 목록·펑션키 줄·메뉴·대화상자에서 쓸 수 있고, MCD 트리 등 일부 화면은 휠만 됩니다.
 - Alt·Ctrl만 누르고 있을 때 나오는 키 안내 줄은 보통 터미널에서는 나오지 않습니다.
 - ZIP은 내장 기능으로 다루고, 다른 압축 형식은 해당 압축 프로그램이 설치되어 있어야 합니다.
 - 옛 `M.CFG`(이진 형식)는 읽지 못하고, 설정은 텍스트 형식으로 저장합니다.
@@ -80,7 +82,7 @@ cargo install --path crates/vv    # vv (다른 도구도 같은 방식)
 
 ### 기여
 
-이슈와 PR 환영합니다. 원본 화면과 다른 부분을 발견하면 DOSBox 등에서 찍은 원본 화면과 함께
+이슈와 PR 환영합니다. 먼저 [AGENTS.md](AGENTS.md)를 읽어 주세요(구조, 규칙, 검증 방법). 원본 화면과 다른 부분을 발견하면 DOSBox 등에서 찍은 원본 화면과 함께
 이슈로 알려 주세요. 단, 원본 프로그램 파일이나 문서 자체는 올리지 말아 주세요.
 
 ---
@@ -132,6 +134,8 @@ All seven programs end up in `target/release/`. Keep them in one folder: `m` loo
 | `F1` | full key help |
 | `Alt-X` | quit |
 
+Mouse: click moves the bar, double click runs or enters, the wheel scrolls; the function-key line, `F10`/`F11`/`F12`, menus and dialogs are clickable. Turn it off with MSET's Mouse option.
+
 ### Settings
 
 - Config file: `~/.config/mdir/M.CFG` (Windows: `%APPDATA%\mdir\M.CFG`; override with `M_CFG`).
@@ -140,7 +144,7 @@ All seven programs end up in `target/release/`. Keep them in one folder: `m` loo
 ### Differences from the original
 
 - No floppy drives today, so disk copy and format work on disk image files.
-- No mouse support yet.
+- The mouse works in m's file list, function-key line, menus and dialogs; some screens (the MCD tree and others) only take the wheel.
 - The key hint line shown while holding Alt or Ctrl doesn't appear in most terminals.
 - ZIP is built in; other archive formats need their archiver installed.
 - The old binary `M.CFG` can't be read; settings are saved as text.
@@ -149,7 +153,7 @@ All seven programs end up in `target/release/`. Keep them in one folder: `m` loo
 
 ### Contributing
 
-Issues and pull requests are welcome. If something looks different from the original, open an
+Issues and pull requests are welcome. Start with [AGENTS.md](AGENTS.md) (layout, rules, how to verify). If something looks different from the original, open an
 issue with a screenshot of the original (for example from DOSBox). Please don't upload the original
 program files or manuals.
 

@@ -2,7 +2,7 @@
 use crate::text::t;
 use ratatui::backend::CrosstermBackend;
 use ratatui::buffer::Buffer;
-use ratatui::crossterm::event::{self, Event, KeyEvent, KeyEventKind, KeyboardEnhancementFlags, PopKeyboardEnhancementFlags, PushKeyboardEnhancementFlags};
+use ratatui::crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEvent, KeyEventKind, KeyboardEnhancementFlags, MouseButton, MouseEventKind, PopKeyboardEnhancementFlags, PushKeyboardEnhancementFlags};
 use ratatui::crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 use ratatui::crossterm::{cursor, execute};
 use ratatui::layout::Rect;
@@ -10,7 +10,7 @@ use ratatui::Terminal;
 use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::Command;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 pub enum Flow {
     Cont,
@@ -41,7 +41,26 @@ pub trait Tui {
     }
     /// After a command ran, so the program can re-read its directory.
     fn after_run(&mut self) {}
+    /// Whether to take mouse events (M.CFG MOUSE).
+    fn mouse(&self) -> bool {
+        true
+    }
 }
+
+/// Feeds keys to the program until one of them doesn't just continue.
+fn feed<T: Tui>(app: &mut T, keys: Vec<KeyEvent>) -> Flow {
+    for k in keys {
+        match app.key(k) {
+            Flow::Cont => {}
+            f => return f,
+        }
+    }
+    Flow::Cont
+}
+
+/// Lines a wheel notch scrolls.
+const WHEEL: usize = 3;
+const DOUBLE_CLICK: Duration = Duration::from_millis(400);
 
 pub fn shell(cmd: &str) -> Command {
     if cfg!(windows) {
@@ -57,9 +76,12 @@ pub fn shell(cmd: &str) -> Command {
     }
 }
 
-fn enter(enh: bool) -> io::Result<()> {
+fn enter(enh: bool, mouse: bool) -> io::Result<()> {
     terminal::enable_raw_mode()?;
     execute!(io::stdout(), EnterAlternateScreen, cursor::Hide)?;
+    if mouse {
+        execute!(io::stdout(), EnableMouseCapture)?;
+    }
     if enh {
         let _ = execute!(io::stdout(), PushKeyboardEnhancementFlags(KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES));
     }
@@ -67,6 +89,7 @@ fn enter(enh: bool) -> io::Result<()> {
 }
 
 fn leave(enh: bool) -> io::Result<()> {
+    let _ = execute!(io::stdout(), DisableMouseCapture);
     if enh {
         let _ = execute!(io::stdout(), PopKeyboardEnhancementFlags);
     }
@@ -104,7 +127,9 @@ pub fn run_outside(r: &RunReq) -> Option<i32> {
 
 pub fn run<T: Tui>(app: &mut T) -> io::Result<()> {
     let enh = matches!(terminal::supports_keyboard_enhancement(), Ok(true));
-    enter(enh)?;
+    let mouse = app.mouse();
+    enter(enh, mouse)?;
+    let mut last_click: Option<(u16, u16, Instant)> = None;
     let hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |p| {
         let _ = leave(true);
@@ -118,12 +143,24 @@ pub fn run<T: Tui>(app: &mut T) -> io::Result<()> {
                 let full = f.area();
                 let a = app.area(full).intersection(full);
                 let mut sub = Buffer::empty(a);
+                crate::mouse::clear();
                 app.draw(&mut sub);
                 f.buffer_mut().merge(&sub);
             })?;
             let flow = if event::poll(Duration::from_millis(250))? {
                 match event::read()? {
                     Event::Key(k) if k.kind != KeyEventKind::Release => app.key(k),
+                    Event::Mouse(m) => match m.kind {
+                        MouseEventKind::ScrollUp => feed(app, vec![crate::mouse::key(KeyCode::Up); WHEEL]),
+                        MouseEventKind::ScrollDown => feed(app, vec![crate::mouse::key(KeyCode::Down); WHEEL]),
+                        MouseEventKind::Down(MouseButton::Left) => {
+                            let now = Instant::now();
+                            let double = matches!(last_click, Some((x, y, t)) if x == m.column && y == m.row && now.duration_since(t) < DOUBLE_CLICK);
+                            last_click = if double { None } else { Some((m.column, m.row, now)) };
+                            feed(app, crate::mouse::keys_at(m.column, m.row, double))
+                        }
+                        _ => Flow::Cont,
+                    },
                     _ => Flow::Cont,
                 }
             } else {
@@ -139,7 +176,7 @@ pub fn run<T: Tui>(app: &mut T) -> io::Result<()> {
                         std::process::exit(code.unwrap_or(0));
                     }
                     run_outside(&r);
-                    enter(enh)?;
+                    enter(enh, mouse)?;
                     term.clear()?;
                     app.after_run();
                 }

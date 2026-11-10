@@ -265,8 +265,12 @@ impl Modal {
     }
 
     pub fn draw(&mut self, b: &mut Buffer, c: &Colors) {
+        use crate::mouse::{block, key, times, zone};
         let a = c.items[DIALOG];
         let hi = hi_of(a);
+        let ar = b.area;
+        // a click outside a dialog does nothing; a message closes on any click
+        block(ar.x, ar.y, ar.width, ar.height, if matches!(self, Modal::Msg { .. }) { vec![key(KeyCode::Enter)] } else { vec![] });
         match self {
             Modal::Msg { title, lines } => {
                 let w = lines.iter().map(|s| hw(s)).max().unwrap_or(0).max(hw(title) + 2).max(20) + 6;
@@ -285,9 +289,14 @@ impl Modal {
                 }
                 let mut cx = x + (w - cw) / 2;
                 let cy = y + h - 2;
+                let n = choices.len();
                 for (i, ch) in choices.iter().enumerate() {
                     let (na, ha) = if i == *sel { (0x70, 0x74) } else { (a, hi) };
+                    let x0 = cx;
                     cx = put_hl(b, cx, cy, ch, na, ha) + 2;
+                    let mut ks = times(KeyCode::Right, (i + n - *sel) % n);
+                    ks.push(key(KeyCode::Enter));
+                    zone(x0, cy, cx - 2 - x0, 1, ks, vec![]);
                 }
             }
             Modal::Input { title, lines, edit, w, .. } => {
@@ -316,6 +325,10 @@ impl Modal {
                     let (na, ha) = if i == *sel { (0x70, 0x74) } else { (a, hi) };
                     putw(b, x + 1, yy, "", *w - 2, na);
                     put_hl(b, x + 2, yy, it, na, ha);
+                    let mut ks = vec![key(KeyCode::Home)];
+                    ks.extend(times(KeyCode::Down, i));
+                    ks.push(key(KeyCode::Enter));
+                    zone(x + 1, yy, *w - 2, 1, ks, vec![]);
                 }
             }
         }

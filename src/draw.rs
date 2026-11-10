@@ -6,6 +6,7 @@ use crate::app::{App, Mode};
 use crate::list::{count_line, entry_text, file_attr, size_attr, Kind};
 use mdir_core::pal::{self, Colors};
 use mdir_core::ratatui::buffer::Buffer;
+use mdir_core::ratatui::crossterm::event::KeyCode;
 use mdir_core::scr::{center_box, fill, frame, hi_of, hline, hw, put, put_hl, putw};
 use mdir_core::fsx::drive_label as fsx_label;
 use mdir_core::text::{commas, fit, fmt_date, fmt_time, t, width};
@@ -39,6 +40,9 @@ pub fn fkey_box(b: &mut Buffer, app: &App, c: &Colors) {
         let def = app.cfg.fkeys.get(k).cloned().unwrap_or_default();
         // a key with several programs shows its name in black (MSET.DOC 펑션키 보통)
         let name_a = if mdir_core::cfg::alternatives(&def).len() > 1 { a & 0xf0 } else { a };
+        if app.hint.is_none() {
+            mdir_core::mouse::zone(x, 0, cell, 1, vec![mdir_core::mouse::key(KeyCode::F(num as u8))], vec![]);
+        }
         let x2 = put(b, x, 0, &label, hi);
         put(b, x2, 0, &fit(&short_prog(&def), (cell as usize).saturating_sub(label.len() + 1)), name_a);
         if i + 1 < keys.len() {
@@ -161,6 +165,7 @@ pub fn draw(app: &mut App, b: &mut Buffer) {
             let i = first + col * rows + r;
             let y = list_y + r as u16;
             let Some(e) = app.entries.get(i) else { continue };
+            mdir_core::mouse::zone(x0, y, cw as u16, 1, mdir_core::mouse::move_bar(app.cur, i), vec![mdir_core::mouse::key(KeyCode::Enter)]);
             let desc = if mode1 && app.cfg.num("DESCVIEW") != 2 { app.descs.get(&e.name) } else { None };
             let order = if mode1 && e.tag > 0 { Some(order_of(app, i)) } else { None };
             let text = entry_text(e, cw, &fmt, desc, order);
@@ -247,6 +252,9 @@ pub fn draw(app: &mut App, b: &mut Buffer) {
         };
         put(b, x, sy, &fit(&mid, rx.saturating_sub(x) as usize), if tagged.is_empty() { a } else { hi });
         put_hl(b, rx, sy, &right, a, hi);
+        for (k, (dx, dw)) in [(0u16, 8u16), (8, 8), (16, hw(&right).saturating_sub(16))].into_iter().enumerate() {
+            mdir_core::mouse::zone(rx + dx, sy, dw, 1, vec![mdir_core::mouse::key(KeyCode::F(10 + k as u8))], vec![]);
+        }
     }
 
     match &app.mode {
@@ -292,6 +300,8 @@ fn draw_menu(b: &mut Buffer, app: &App, c: &Colors, m: usize, i: usize) {
     let a = c.items[pal::DIALOG];
     let hi = hi_of(a);
     let ms = menus();
+    let ar = b.area;
+    mdir_core::mouse::block(ar.x, ar.y, ar.width, ar.height, vec![mdir_core::mouse::key(KeyCode::Esc)]);
     putw(b, 0, 0, "", w, a);
     let mut x = 1;
     let mut xs = vec![];
@@ -299,7 +309,11 @@ fn draw_menu(b: &mut Buffer, app: &App, c: &Colors, m: usize, i: usize) {
         let title = t(md.ko, md.en);
         xs.push(x);
         let (na, ha) = if k == m { (0x70, 0x74) } else { (a, hi) };
+        let x0 = x;
         x = put_hl(b, x, 0, title, na, ha) + 1;
+        if let Some(l) = "MRFDAO".chars().nth(k) {
+            mdir_core::mouse::zone(x0, 0, x - x0, 1, vec![mdir_core::mouse::key(KeyCode::Char(l))], vec![]);
+        }
     }
     let items = &ms[m].items;
     let iw = items.iter().map(|it| hw(t(it.ko, it.en))).max().unwrap_or(10) + 6;
@@ -318,6 +332,10 @@ fn draw_menu(b: &mut Buffer, app: &App, c: &Colors, m: usize, i: usize) {
         let (na, ha) = if k == i { (0x70, 0x74) } else { (a, hi) };
         putw(b, x0 + 1, y, "", iw - 2, na);
         put_hl(b, x0 + 2, y, &label, na, ha);
+        let mut ks = vec![mdir_core::mouse::key(KeyCode::Home)];
+        ks.extend(mdir_core::mouse::times(KeyCode::Down, k));
+        ks.push(mdir_core::mouse::key(KeyCode::Enter));
+        mdir_core::mouse::zone(x0 + 1, y, iw - 2, 1, ks, vec![]);
     }
 }
 
@@ -327,6 +345,7 @@ fn draw_help(b: &mut Buffer, c: &Colors, lines: &[String], top: usize) {
     let hi = (a & 0xf0) | 0x0f;
     let wd = (lines.iter().map(|l| hw(l)).max().unwrap_or(40) + 4).min(area.width);
     let ht = (lines.len() as u16 + 2).min(area.height);
+    mdir_core::mouse::block(area.x, area.y, area.width, area.height, vec![mdir_core::mouse::key(KeyCode::Esc)]);
     let (x, y) = center_box(b, wd, ht, a, t("도움말", "Quick Help"));
     for (k, l) in lines.iter().skip(top).take(ht as usize - 2).enumerate() {
         put_hl(b, x + 2, y + 1 + k as u16, l, a, hi);

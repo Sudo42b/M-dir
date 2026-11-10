@@ -3,6 +3,7 @@
 pub mod cfg;
 pub mod fsx;
 pub mod modal;
+pub mod mouse;
 pub mod pal;
 pub mod scr;
 pub mod shot;
